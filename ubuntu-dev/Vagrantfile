@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "ubuntu/vivid64"
+  
+  config.vm.hostname = "dev"
+
+  config.vm.provider :virtualbox do |vb|
+     # Don't boot with headless mode
+     vb.gui = true
+	 
+     cpus = 4
+     mem = "4096"
+  
+     vb.customize ["modifyvm", :id, "--memory", mem]
+     vb.customize ["modifyvm", :id, "--cpus", cpus]
+  
+     # pick up the other cores
+     vb.customize ["modifyvm", :id, "--ioapic", "on"]
+  
+  end
+  #
+  # View the documentation for the provider you're using for more
+  # information on available options.
+
+  #config.vm.provision "shell", path: "install-dev-environment.sh"
+  config.vm.provision "shell", path: "install-xfce4.sh"
+  #config.vm.provision "shell", path: "install-gnome.sh"
+  #config.vm.provision "shell", path: "install-dev-tools.sh"
+  #config.vm.provision "shell", path: "eclipse-features.sh"
+
+  #config.vm.provision "shell", inline: <<-SHELL
+  #  
+  #  
+  #SHELL
+  
+end

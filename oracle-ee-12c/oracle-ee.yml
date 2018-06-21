@@ -1,0 +1,11 @@
+---
+- name: Configure CentOS with Oracle Database 12c
+  hosts: localhost
+  become: true
+  vars_files:
+    - vars/main.yml
+    - vars/secrets.yml
+  roles:
+    - role: linux-oracle
+    - role: oracle-install
+      become_user: '{{ oracle_user }}'

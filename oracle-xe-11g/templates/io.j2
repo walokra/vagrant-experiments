@@ -1,0 +1,10 @@
+set echo on
+spool ./create_test_io.log
+
+create or replace directory import as '{{ oracle_base }}/oracle/import';
+grant read,write on DIRECTORY import to TEST;
+grant imp_full_database to TEST;
+grant exp_full_database to TEST;
+
+spool off
+exit 0

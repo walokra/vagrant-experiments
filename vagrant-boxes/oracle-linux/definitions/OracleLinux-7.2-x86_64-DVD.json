@@ -1,0 +1,47 @@
+{
+  "min_packer_version": "0.6.0",
+  "builders": [
+    {
+      "name": "OracleLinux-R7-U1-Server-x86_64",
+      "type": "virtualbox-iso",
+      "guest_os_type": "Oracle_64",
+      "iso_url": "http://mirrors.wimmekes.net/pub/OL7/iso/OracleLinux-R7-U2-Server-x86_64-dvd.iso",
+      "iso_checksum": "3b9d65d26576921372b1b35b03fd791d",
+      "iso_checksum_type": "md5",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "disk_size": 61440,
+      "http_directory": "http",
+      "boot_command": ["<tab> text ks=http://{{.HTTPIP}}:{{.HTTPPort}}/ks.cfg<enter><wait>"],
+      "boot_wait": "10s",
+      "ssh_username": "root",
+      "ssh_password": "vagrant",
+      "ssh_wait_timeout": "90m",
+      "shutdown_command": "sudo /sbin/halt -p now",
+      "vboxmanage": [
+        ["modifyvm", "{{.Name}}", "--memory", "1024"],
+        ["modifyvm", "{{.Name}}", "--cpus", "1"]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "OracleLinux-7.2-x86_64-DVD/base.sh",
+        "OracleLinux-7.2-x86_64-DVD/vagrant.sh",
+        "OracleLinux-7.2-x86_64-DVD/virtualbox.sh",
+        "OracleLinux-7.2-x86_64-DVD/provision.sh",
+		"OracleLinux-7.2-x86_64-DVD/info.sh",
+		"OracleLinux-7.2-x86_64-DVD/cleanup.sh",
+        "OracleLinux-7.2-x86_64-DVD/zerodisk.sh"
+      ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "compression_level": 9,
+      "output": "./builds/{{.BuildName}}.box"
+    }
+  ]
+}

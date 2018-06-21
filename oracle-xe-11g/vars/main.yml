@@ -1,0 +1,30 @@
+---
+
+  oracle_user: oracle
+  oracle_install_group: dba
+  oracle_base: /u01/app
+
+  installer_archive: oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+  installer_rpm: oracle-xe-11.2.0-1.0.x86_64.rpm
+
+  oracle_install_version: 11.2.0
+
+  oracle_http_port: 8080
+  oracle_listener_port: 1521
+  oracle_system_pwd: sysadmin
+  oracle_start_boot: y
+  oracle_reconfigure: yes
+
+  oracle_sid: XE
+  oracle_test_pwd: test
+
+  swapfile_size: 2048
+  swapfile_location: /swapfile
+
+  oracle-xe-test: yes
+
+  packages_list:
+    - libaio
+    - bc
+    - flex
+    - unzip

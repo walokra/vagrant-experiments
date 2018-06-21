@@ -1,0 +1,109 @@
+---
+# Tasks for oracle-install role. This role installs the Oracle Database
+# 12c software, configure a database, listener
+
+- name: Create folder for installation files
+  file: state=directory path={{ installation_folder }}
+
+- name: Extract installation files
+  become_user: oracle
+  unarchive: src=files/{{ item }} dest={{ installation_folder }}
+  with_items: '{{ installer_archives }}'
+
+- name: Gerenerate the response file for software only installation
+  become_user: oracle
+  template: src=db_install.rsp.j2 dest={{ installation_folder }}/db_install.rsp
+
+- name: Install Product
+  become_user: oracle
+  command: '{{ installation_folder}}/database/runInstaller -waitforcompletion -ignoreSysPrereqs -ignorePrereq -silent -noconfig -responseFile {{ installation_folder }}/db_install.rsp'
+
+- name: create oracle hostname variable
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export ORACLE_HOSTNAME={{ oracle_hostname }}'
+
+- name: create oracle home variable
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export ORACLE_HOME={{ oracle_home }}'
+
+- name: create oracle sid variable
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export ORACLE_SID={{ oracle_sid }}'
+
+- name: add data location
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export ORACLE_DATA={{ oracle_dataloc }}'
+
+- name: add oracle home bin folder
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export PATH=$PATH:$ORACLE_HOME/bin'
+
+- name: add ld_library path
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib'
+
+- name: add classpath
+  lineinfile: dest='/home/{{ oracle_user }}/.bashrc' line='export CLASSPATH=$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib'
+
+- name: Execute Inventory root command
+  command: '{{ inventory_location }}/orainstRoot.sh'
+  become_user: root
+
+- name: Execute DB home root command
+  command: '{{ oracle_home }}/root.sh'
+  become_user: root
+
+- stat: path={{ oracle_home }}/lib/libjavavm12.a
+  register: libjavavm12
+
+- name: copy libjavavm12 to lib
+  command: cp {{ oracle_home }}/javavm/jdk/jdk6/lib/libjavavm12.a {{ oracle_home }}/lib/
+  when: not libjavavm12.stat.exists
+
+- stat: path={{ oracle_home }}/bin/oracle
+  register: oracle_bin
+
+- name: move config for relinking
+  command: mv {{ oracle_home }}/rdbms/lib/config.o {{ oracle_home }}/rdbms/lib/config.o.bak
+  ignore_errors: yes
+  when: not oracle_bin.stat.size > 0
+
+- name: make ins_rdbms.mk install for relinking
+  #command: 'chdir={{ oracle_home }}/rdbms/lib make -f ins_rdbms.mk install'
+  command: bash -lc "cd {{ oracle_home }}/rdbms/lib && make -f ins_rdbms.mk install"
+  when: not oracle_bin.stat.size > 0
+
+- name: make ins_net_server.mk install for relinking
+  #command: 'chdir={{ oracle_home }}/network/lib make -f ins_net_server.mk install'
+  command: bash -lc "cd {{ oracle_home }}/network/lib && make -f ins_net_server.mk install"
+  when: not oracle_bin.stat.size > 0
+
+# - name: Source the bashrc file
+#   shell: source /home/{{ oracle_user }}/.bashrc
+#   when: not oracle_bin.stat.size > 0
+- name: relink oracle
+  command: '{{ oracle_home }}/bin/relink all'
+  when: not oracle_bin.stat.size > 0
+  environment:
+    ORACLE_HOME: '{{ oracle_home }}'
+
+- name: copy listener response file
+  template: src=netca.rsp.j2 dest={{ installation_folder }}/netca.rsp
+  register: listener_config_file_created
+
+- name: Create listener using netca
+  command: '{{ oracle_home }}/bin/netca -silent -responseFile {{ installation_folder }}/netca.rsp'
+  when: listener_config_file_created|success
+
+- name: copy response file for dbca
+  template: src=dbca.rsp.j2 dest={{ installation_folder }}/dbca.rsp
+  register: database_config_file_created
+
+- name: create database
+  command: '{{ oracle_home }}/bin/dbca -silent -responseFile {{ installation_folder }}/dbca.rsp'
+
+- name: change oratab
+  lineinfile: dest='/etc/oratab' regexp='^{{ oracle_sid }}:{{ oracle_home }}:N' line='{{ oracle_sid }}:{{ oracle_home }}:Y'
+  become_user: root
+
+- name: copy init.d oracle script to /etc/init.d
+  template: src=oradb.j2 dest=/etc/init.d/oradb mode=750
+  become_user: root
+
+- name: enable oradb script to run at startup
+  command: 'chkconfig --add oradb'
+  become_user: root

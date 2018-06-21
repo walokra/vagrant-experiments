@@ -1,0 +1,26 @@
+# Kernel sysctl configuration file for Red Hat Linux
+#
+# For binary values, 0 is disabled, 1 is enabled.  See sysctl(8) and
+# sysctl.conf(5) for more details.
+
+# Shared memory and semaphore
+# look for document 226209.1 in oracle support for details
+kernel.sem = {{ kernel_sem }}
+
+# maximize port range
+net.ipv4.ip_local_port_range = {{ net_ipv4_ip_local_port_range }}
+
+# For 1Gbps with 1ms latency 16MB buffer
+net.core.rmem_default = {{ net_core_rmem_default }}
+net.core.rmem_max = {{ net_core_rmem_max }}
+net.core.wmem_default = {{ net_core_wmem_default }}
+net.core.wmem_max = {{ net_core_wmem_max }}
+
+# Max open file descriptors 512 * db processes + room for os
+fs.file-max = {{ fs_file_max }}
+fs.aio-max-nr = {{ fs_aio_max_nr }}
+
+# Minimize swap file use
+vm.swappiness = 10
+vm.dirty_background_ratio = 5
+vm.dirty_ratio = 10

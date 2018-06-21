@@ -1,0 +1,51 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "boxcutter/centos71"
+  #config.vm.box_url = ""
+
+  config.vm.network :private_network, ip: "192.168.37.100", auto_config: true
+	config.vm.hostname = "oradb.private"
+
+  #config.vm.network :forwarded_port, guest: 1521, host: 1521
+
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "vagrant-oracle-xe"
+
+    # host = RbConfig::CONFIG['host_os']
+    # # https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
+    # Give VM 1/4 system memory & access to all cpu cores - 1 on the host
+    # if host =~ /darwin/
+    #   cpus = `sysctl -n hw.ncpu`.to_i - 1
+    #   # sysctl returns Bytes and we need to convert to MB
+    #   mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
+    # elsif host =~ /linux/
+    #   cpus = `nproc`.to_i - 1
+    #   # meminfo shows KB and we need to convert to MB
+    #   mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    # else # sorry Windows folks, I can't help you
+    #   cpus = 2
+    #   mem = 1024
+    # end
+
+    cpus = 2
+    mem = "4096"
+
+	  vb.customize ["modifyvm", :id, "--memory", mem]
+	  vb.customize ["modifyvm", :id, "--cpus", cpus]
+        
+    # pick up the other cores
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "oracle-xe.yml"
+		ansible.verbose = "v"
+  end
+
+end

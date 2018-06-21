@@ -1,0 +1,2 @@
+sysctl kernel.shmall=2097152
+sysctl kernel.shmmax=4294967295

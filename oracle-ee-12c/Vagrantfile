@@ -1,0 +1,57 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "oraclelinux-7.2-x86_64"
+  config.vm.box_url = "oraclelinux-7.2-x86_64.box"
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  config.vm.network "private_network", ip: "192.168.37.100", auto_config: true
+  config.vm.hostname = "oradb12c"
+
+  #config.vm.network :forwarded_port, guest: 1152, host: 1152
+  #config.vm.network :forwarded_port, guest: 5500, host: 5500
+
+  # Use NFS for shared folders for better performance
+  #config.vm.synced_folder '.', '/vagrant', nfs: true
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "vagrant-oracle-ee-12c"
+
+    # host = RbConfig::CONFIG['host_os']
+    #
+    # # https://stefanwrobel.com/how-to-make-vagrant-performance-not-suck
+    # # Give VM 1/4 system memory & access to all cpu cores - 1 on the host
+    # if host =~ /darwin/
+    #   cpus = `sysctl -n hw.ncpu`.to_i - 1
+    #   # sysctl returns Bytes and we need to convert to MB
+    #   mem = `sysctl -n hw.memsize`.to_i / 1024 / 1024 / 4
+    # elsif host =~ /linux/
+    #   cpus = `nproc`.to_i - 1
+    #   # meminfo shows KB and we need to convert to MB
+    #   mem = `grep 'MemTotal' /proc/meminfo | sed -e 's/MemTotal://' -e 's/ kB//'`.to_i / 1024 / 4
+    # else # sorry Windows folks, I can't help you
+    #   cpus = 2
+    #   mem = 1024
+    # end
+
+    cpus = 4
+    mem = "4096"
+
+	  vb.customize ["modifyvm", :id, "--memory", mem]
+	  vb.customize ["modifyvm", :id, "--cpus", cpus]
+
+    # pick up the other cores
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
+  end
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "oracle-ee.yml"
+    #ansible.start_at_task="create oracle home variable"
+    #ansible.verbose = "v"
+  end
+end

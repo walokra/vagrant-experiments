@@ -1,0 +1,39 @@
+FROM oraclelinux:7
+
+RUN rpm -iUvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm && \
+		yum -y update && \
+		yum -y install sudo ansible
+
+# Edit sudoers file
+# To avoid error: sudo: sorry, you must have a tty to run sudo
+RUN sed -i -e "s/Defaults    requiretty.*/ #Defaults    requiretty/g" /etc/sudoers
+
+# Add playbooks to the Docker image
+COPY oracle-ee.yml /tmp/site.yml
+RUN mkdir /tmp/roles && mkdir /tmp/files
+COPY roles /tmp/roles
+COPY vars/main.yml /tmp/vars/main.yml
+COPY vars/secrets.yml /tmp/vars/secrets.yml
+COPY files /tmp/files
+
+COPY step1/oraInst.loc /etc/
+
+WORKDIR /tmp
+
+# Run Ansible to configure the Docker image
+RUN ansible-playbook site.yml -c local -e docker=yes
+#&& \
+#    rm -rf /tmp/*
+
+ENV ORACLE_HOME /u01/app/oracle/product/11.2.0/db_home1
+ENV ORACLE_SID  orcl
+ENV PATH        $ORACLE_HOME/bin:$PATH
+
+EXPOSE 1521
+EXPOSE 8080
+
+# Run script
+ADD step2/start.sh /
+ADD step2/colorecho /
+RUN chmod u+x /start.sh
+CMD /start.sh

@@ -1,0 +1,43 @@
+---
+
+  - stat: path=/etc/init.d/oracle-xe
+    register: oracle
+
+  - stat: path={{swapfile_location}}
+    register: swap
+
+  - include: oracle-xe-swap.yml
+    when: (not oracle.stat.exists) and (not swap.stat.exists)
+
+  - include: oracle-xe-install.yml
+    when: (not oracle.stat.exists)
+
+  - stat: path=/etc/sysconfig/oracle-xe
+    register: conf
+
+  - include: oracle-xe-configure.yml
+    when: (not conf.stat.exists) or (oracle_reconfigure == 'yes')
+
+  - name: restart oracle-xe
+    service: name=oracle-xe state=restarted
+    when: (not oracle.stat.exists) or (not conf.stat.exists) or (oracle_reconfigure == 'yes')
+
+  - stat: path=/u01/app/oracle/.bash_profile
+    register: bash_profile
+
+  - file: path=/u01/app/oracle/.bash_profile owner=oracle group=dba state=touch
+    when: (not bash_profile.stat.exists)
+
+  - name: setup oracle environment
+    shell: /bin/echo 'source {{ oracle_base }}/oracle/product/{{ oracle_install_version }}/xe/bin/oracle_env.sh' > {{ oracle_base }}/oracle/.bash_profile
+
+  - stat: path={{ oracle_base }}/oracle/.bashrc
+    register: bashrc
+
+  - file: path={{ oracle_base }}/oracle/.bashrc owner=oracle group=dba state=touch
+    when: (not bashrc.stat.exists)
+
+  - lineinfile: dest={{ oracle_base }}/oracle/.bashrc line="source ~/.bash_profile" state=present
+
+  - include: oracle-xe-test.yml
+    when: oracle-xe-test

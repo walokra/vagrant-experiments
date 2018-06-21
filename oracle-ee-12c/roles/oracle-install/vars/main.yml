@@ -1,0 +1,36 @@
+---
+install_db: INSTALL_DB_SWONLY
+# {{ ansible_fqdn }}
+oracle_hostname: 'oradb12c'
+inventory_os_group: '{{ oracle_install_group }}'
+inventory_location: '{{ oracle_base }}/inventory'
+oracle_home: '{{ oracle_base }}/product/{{ oracle_install_version }}/{{ dbhome_name }}'
+
+installer_archives:
+  - 'linuxamd64_12102_database_1of2.zip'
+  - 'linuxamd64_12102_database_2of2.zip'
+
+oracle_install_version: '12.1.0'
+
+installation_folder: '{{ oracle_base }}/installation'
+
+dbhome_name: 'dbhome_1'
+oracle_edition: 'EE'
+oracle_dba_group: dba
+oracle_oper_group: oper
+oracle_database_type: 'GENERAL_PURPOSE'
+oracle_globalname: 'orcl'
+oracle_sid: 'orcl'
+
+oracle_charset: 'AL32UTF8'
+oracle_memory_option: 'true'
+
+# memory target
+oracle_memory_mb: 1024
+oracle_install_samples: 'true'
+oracle_management_option: 'DEFAULT'
+oracle_enable_recovery: 'false'
+oracle_storage_type: 'FILE_SYSTEM_STORAGE'
+oracle_dataloc: '{{ oracle_base }}/oradata'
+oracle_recoveryloc: '{{ oracle_base }}/recovery_area'
+oracle_decline_security_updates: 'yes'

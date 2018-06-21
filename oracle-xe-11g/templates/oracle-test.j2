@@ -1,0 +1,11 @@
+#!/bin/bash
+
+export ORACLE_HOME={{ oracle_base }}/oracle/product/{{ oracle_install_version }}/xe
+export ORACLE_SID={{oracle_sid }}
+export ORACLE_BASE={{ oracle_base }}/oracle
+export PATH=$ORACLE_HOME/bin:$PATH
+
+sqlplus sys/{{ oracle_system_pwd }} as sysdba @ $PWD/sql/role.sql
+sqlplus sys/{{ oracle_system_pwd }} as sysdba @ $PWD/sql/tablespaces.sql
+sqlplus sys/{{ oracle_system_pwd }} as sysdba @ $PWD/sql/user.sql
+sqlplus sys/{{ oracle_system_pwd }} as sysdba @ $PWD/sql/io.sql
